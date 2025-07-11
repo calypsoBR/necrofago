@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NECRÓFAGO - Núcleo de Controle</title>
   <style>
+    /* Seus estilos originais permanecem exatamente iguais */
     body {
       background-color: #000;
       color: #0f0;
@@ -88,6 +89,7 @@
   </style>
 </head>
 <body>
+  <!-- Seu conteúdo HTML original permanece igual -->
   <div id="main">
     <img id="logo" src="https://cdn.glitch.global/85c0c604-0dea-4b74-942d-caabf5846256/thumbnails%2Fnecr%C3%B3fago_logo.png?1751802107893" alt="NECRÓFAGO">
     <div id="alerta" class="blink">⚠️ NECRÓFAGO DETECTOU A SUA PRESENÇA ⚠️</div>
@@ -113,25 +115,74 @@
   </audio>
 
   <script>
-    // ========== CONFIGURAÇÕES ATUALIZADAS ========== //
+    // ========== SISTEMA DE BLOQUEIO ROBUSTO ========== //
     const BLOQUEIO_DURACAO = 4 * 60 * 1000; // 4 minutos para testes
-    const dataAtivacao = new Date("2025-07-11T03:33:00"); // Data alterada
-    // ========== FIM DAS CONFIGURAÇÕES ========== //
+    const dataAtivacao = new Date("2025-07-11T03:33:00"); // Data alterada para testes
+    let bloqueioAtivo = false;
+    let tentativasRestantes = 3;
 
-    // Verifica bloqueio existente
-    const bloqueioSalvo = localStorage.getItem('necrofago_bloqueio');
-    if (bloqueioSalvo && Number(bloqueioSalvo) > Date.now()) {
-      window.onbeforeunload = function(e) {
-        e.preventDefault();
-        return e.returnValue = 'A NECRÓFAGO bloqueou esta sessão. Atualizar não resetará as tentativas.';
-      };
-      
-      document.addEventListener('keydown', function(e) {
-        if ((e.ctrlKey || e.metaKey) && (e.key === 'r' || e.key === 'R')) e.preventDefault();
-        if (e.key === 'F5') e.preventDefault();
-      });
+    // Verifica bloqueio existente ao carregar
+    if (sessionStorage.getItem('necrofago_bloqueio')) {
+      iniciarBloqueio();
     }
 
+    function iniciarBloqueio() {
+      bloqueioAtivo = true;
+      sessionStorage.setItem('necrofago_bloqueio', 'true');
+      
+      // 1. Bloqueia teclas de atualização
+      document.addEventListener('keydown', function(e) {
+        if (bloqueioAtivo) {
+          // Bloqueia F5, Ctrl+R, Ctrl+F5, etc.
+          if (e.key === 'F5' || e.key === 'F11' || 
+             (e.ctrlKey && e.key === 'r') || 
+             (e.ctrlKey && e.key === 'F5') ||
+             (e.metaKey && e.key === 'r')) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            window.location.reload(); // Força recarregar mantendo o bloqueio
+          }
+        }
+      });
+
+      // 2. Bloqueia botão direito e menu de contexto
+      document.addEventListener('contextmenu', function(e) {
+        if (bloqueioAtivo) {
+          e.preventDefault();
+          return false;
+        }
+      });
+
+      // 3. Manipula o evento beforeunload
+      window.addEventListener('beforeunload', function(e) {
+        if (bloqueioAtivo) {
+          e.preventDefault();
+          // Mensagem que aparece ao tentar fechar
+          e.returnValue = 'A NECRÓFAGO bloqueou esta sessão. Suas tentativas não serão resetadas.';
+          return e.returnValue;
+        }
+      });
+
+      // 4. Verificação periódica para evitar bypass
+      setInterval(() => {
+        if (bloqueioAtivo) {
+          sessionStorage.setItem('necrofago_bloqueio', 'true');
+        }
+      }, 1000);
+
+      // Remove o bloqueio após o tempo estipulado
+      setTimeout(() => {
+        finalizarBloqueio();
+      }, BLOQUEIO_DURACAO);
+    }
+
+    function finalizarBloqueio() {
+      bloqueioAtivo = false;
+      sessionStorage.removeItem('necrofago_bloqueio');
+      window.location.reload();
+    }
+
+    // ========== SEU CÓDIGO ORIGINAL (COM MODIFICAÇÕES) ========== //
     const agora = new Date();
     if (agora < dataAtivacao) {
       document.body.innerHTML = `
@@ -162,7 +213,6 @@
     }
 
     let tempo = 20 * 60;
-    let tentativas = 0;
     let bloqueado = false;
 
     const timerEl = document.getElementById("timer");
@@ -196,24 +246,24 @@
     }
 
     function tocarSirene() {
-      if (!bloqueado) {
+      if (!bloqueado && !bloqueioAtivo) {
         sirene.play().catch(e => console.log("Erro na sirene:", e));
       }
     }
 
     function verificarComando() {
-      if (bloqueado) return;
+      if (bloqueado || bloqueioAtivo) return;
 
       const comando = document.getElementById("comando").value.trim();
 
       if (comando === "REBOOT-NECRO") {
         reiniciarNecrofago();
       } else {
-        tentativas++;
-        if (tentativas >= 3) {
+        tentativasRestantes--;
+        if (tentativasRestantes <= 0) {
           bloquearAcesso();
         } else {
-          resposta.innerHTML = `<p style="color:red;">❌ Comando incorreto. Tentativas restantes: ${3 - tentativas}</p>`;
+          resposta.innerHTML = `<p style="color:red;">❌ Comando incorreto. Tentativas restantes: ${tentativasRestantes}</p>`;
         }
       }
     }
@@ -246,29 +296,11 @@
     }
 
     function bloquearAcesso() {
-      // ========== SISTEMA DE BLOQUEIO ATUALIZADO ========== //
-      localStorage.setItem('necrofago_bloqueio', Date.now() + BLOQUEIO_DURACAO);
-      
-      window.onbeforeunload = function(e) {
-        e.preventDefault();
-        return e.returnValue = 'A NECRÓFAGO bloqueou esta sessão. Atualizar não resetará as tentativas.';
-      };
-      
-      document.addEventListener('keydown', function(e) {
-        if ((e.ctrlKey || e.metaKey) && (e.key === 'r' || e.key === 'R')) e.preventDefault();
-        if (e.key === 'F5') e.preventDefault();
-      });
-
-      setTimeout(() => {
-        localStorage.removeItem('necrofago_bloqueio');
-        window.onbeforeunload = null;
-      }, BLOQUEIO_DURACAO);
-      // ========== FIM DO SISTEMA DE BLOQUEIO ========== //
-
       bloqueado = true;
       clearInterval(intervalo);
       sirene.pause();
       mostrarTelaCheia("🚫 ACESSO BLOQUEADO PERMANENTEMENTE.", "red");
+      iniciarBloqueio(); // Ativa o sistema anti-atualização
     }
 
     function mostrarTelaCheia(mensagem, cor) {
