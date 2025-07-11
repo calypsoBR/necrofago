@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ACESSO BLOQUEADO</title>
+    <style>
+        body { 
+            background: black; 
+            color: red; 
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            padding-top: 100px;
+        }
+        .blink {
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        #contador {
+            font-size: 2em;
+            margin: 20px 0;
+            color: yellow;
+        }
+    </style>
+    <script>
+        const TEMPO_BLOQUEIO = 4 * 60; // 4 minutos em segundos
+        let tempoRestante = TEMPO_BLOQUEIO;
+        
+        function atualizarContador() {
+            const minutos = Math.floor(tempoRestante / 60);
+            const segundos = tempoRestante % 60;
+            document.getElementById('contador').textContent = 
+                `Liberação em: ${minutos}:${segundos.toString().padStart(2, '0')}`;
+            
+            if (tempoRestante <= 0) {
+                sessionStorage.removeItem('necro_bloqueio');
+                sessionStorage.removeItem('necro_bloqueio_tempo');
+                window.location.href = "index.html";
+            } else {
+                tempoRestante--;
+                setTimeout(atualizarContador, 1000);
+            }
+        }
+        
+        // Impede qualquer atualização
+        window.addEventListener('beforeunload', function(e) {
+            e.preventDefault();
+            e.returnValue = '';
+        });
+        
+        // Inicia o contador
+        window.onload = function() {
+            atualizarContador();
+        };
+    </script>
+</head>
+<body>
+    <h1 class="blink">🚫 ACESSO BLOQUEADO 🚫</h1>
+    <p>Violou as regras do sistema NECRÓFAGO</p>
+    <div id="contador"></div>
+    <p>Tentativas de atualizar a página foram detectadas</p>
+    <p style="color: #333;">Sistema v3.1 | Bloqueio ativo</p>
+</body>
+</html>
