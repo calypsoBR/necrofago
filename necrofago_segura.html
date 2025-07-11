@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NECRÓFAGO - Núcleo de Controle</title>
   <style>
-    /* [Seu CSS original permanece EXATAMENTE IGUAL] */
     body {
       background-color: #000;
       color: #0f0;
@@ -89,7 +88,6 @@
   </style>
 </head>
 <body>
-  <!-- [Seu HTML original permanece EXATAMENTE IGUAL] -->
   <div id="main">
     <img id="logo" src="https://cdn.glitch.global/85c0c604-0dea-4b74-942d-caabf5846256/thumbnails%2Fnecr%C3%B3fago_logo.png?1751802107893" alt="NECRÓFAGO">
     <div id="alerta" class="blink">⚠️ NECRÓFAGO DETECTOU A SUA PRESENÇA ⚠️</div>
@@ -116,40 +114,22 @@
 
   <script>
     // ========== SISTEMA DE BLOQUEIO AVANÇADO ========== //
-    const BLOQUEIO_TEMPO = 4 * 60 * 1000; // 4 minutos em ms
-    let tempoInicio = Date.now();
+    const BLOQUEIO_TEMPO = 4 * 60 * 1000; // 4 minutos (oculto)
 
-    // Verifica se está em estado de bloqueio
+    // Verifica bloqueio ativo
     if (sessionStorage.getItem('necro_bloqueio')) {
-      const tempoBloqueio = parseInt(sessionStorage.getItem('necro_bloqueio_tempo'));
-      if (Date.now() - tempoBloqueio < BLOQUEIO_TEMPO) {
-        window.location.href = "bloqueio.html";
-      } else {
-        sessionStorage.removeItem('necro_bloqueio');
-        sessionStorage.removeItem('necro_bloqueio_tempo');
-      }
-    }
-
-    // Armazena o estado inicial
-    if (!sessionStorage.getItem('necro_inicio')) {
-      sessionStorage.setItem('necro_inicio', tempoInicio.toString());
-      sessionStorage.setItem('necro_tentativas', '0');
-      sessionStorage.setItem('necro_tempo_restante', '1200'); // 20min em segundos
+      window.location.href = "bloqueio.html";
     }
 
     // Monitora atualizações não autorizadas
     window.addEventListener('beforeunload', function(e) {
       if (!e.target.activeElement.hasAttribute('data-permitido')) {
-        ativarBloqueio();
+        sessionStorage.setItem('necro_bloqueio', 'true');
       }
     });
 
-    function ativarBloqueio() {
-      sessionStorage.setItem('necro_bloqueio', 'true');
-      sessionStorage.setItem('necro_bloqueio_tempo', Date.now().toString());
-    }
-
-    // ========== CÓDIGO ORIGINAL (COM ADAPTAÇÕES MINIMAS) ========== //
+    // ========== CÓDIGO ORIGINAL COM AJUSTES ========== //
+    // Controle de data/hora
     const dataAtivacao = new Date("2025-07-11T12:03:00");
     const agora = new Date();
 
@@ -181,8 +161,9 @@
       throw new Error("Acesso bloqueado por horário.");
     }
 
-    let tempo = parseInt(sessionStorage.getItem('necro_tempo_restante')) || 20 * 60;
-    let tentativas = parseInt(sessionStorage.getItem('necro_tentativas')) || 0;
+    // Inicialização
+    let tempo = 20 * 60;
+    let tentativas = 0;
     let bloqueado = false;
 
     const timerEl = document.getElementById("timer");
@@ -192,22 +173,24 @@
     const alerta = document.getElementById("alerta");
     const resposta = document.getElementById("resposta");
 
-    setTimeout(() => {
-      alerta.style.display = "block";
-    }, 2000);
-
-    const intervalo = setInterval(updateTimer, 1000);
+    // Se já estava em tela de sucesso, recria
+    if (sessionStorage.getItem('necro_sucesso')) {
+      reiniciarNecrofago();
+    } else {
+      // Inicia temporizador normalmente
+      setTimeout(() => { alerta.style.display = "block"; }, 2000);
+      const intervalo = setInterval(updateTimer, 1000);
+    }
 
     function updateTimer() {
       const minutos = Math.floor(tempo / 60);
       const segundos = tempo % 60;
       timerEl.textContent = `Tempo restante: ${minutos}:${segundos.toString().padStart(2, '0')}`;
       tempo--;
-      sessionStorage.setItem('necro_tempo_restante', tempo.toString());
 
       if (tempo < 0) {
         clearInterval(intervalo);
-        ativarBloqueio();
+        sessionStorage.setItem('necro_bloqueio', 'true');
         mostrarTelaCheia("⛔ TEMPO ESGOTADO - Bloqueio ativado", "red");
         sirene.pause();
       }
@@ -229,14 +212,11 @@
       const comando = document.getElementById("comando").value.trim();
 
       if (comando === "REBOOT-NECRO") {
-        sessionStorage.clear();
+        sessionStorage.setItem('necro_sucesso', 'true');
         reiniciarNecrofago();
       } else {
         tentativas++;
-        sessionStorage.setItem('necro_tentativas', tentativas.toString());
-        
         if (tentativas >= 3) {
-          ativarBloqueio();
           bloquearAcesso();
         } else {
           resposta.innerHTML = `<p style="color:red;">❌ Comando incorreto. Tentativas restantes: ${3 - tentativas}</p>`;
@@ -245,6 +225,17 @@
     }
 
     function reiniciarNecrofago() {
+      // Remove tudo exceto o estado de sucesso
+      sessionStorage.clear();
+      sessionStorage.setItem('necro_sucesso', 'true');
+      
+      // Impede atualizações na tela de sucesso
+      window.addEventListener('beforeunload', function(e) {
+        e.preventDefault();
+        reiniciarNecrofago();
+      });
+
+      // [Restante da função original]
       clearInterval(intervalo);
       sirene.pause();
       
@@ -275,18 +266,28 @@
       bloqueado = true;
       clearInterval(intervalo);
       sirene.pause();
-      mostrarTelaCheia("🚫 ACESSO BLOQUEADO - Redirecionando...", "red");
-      setTimeout(() => { window.location.href = "bloqueio.html"; }, 2000);
+      mostrarTelaCheia(`
+        <div style="color:red; font-size:2em;">
+          🚫 ACESSO BLOQUEADO PERMANENTEMENTE
+        </div>
+        <p style="color:#0f0; margin-top:20px;">
+          Você excedeu o limite de tentativas permitidas.
+        </p>
+      `, true);
     }
 
-    function mostrarTelaCheia(mensagem, cor) {
+    function mostrarTelaCheia(mensagem, isBloqueioPermanente = false) {
       const tela = document.createElement("div");
       tela.className = "tela-cheia";
-      tela.innerHTML = `<div style="color:${cor}; font-size:2em;">${mensagem}</div>`;
+      tela.innerHTML = mensagem;
       document.body.appendChild(tela);
+
+      if (isBloqueioPermanente) {
+        sessionStorage.setItem('necro_bloqueio', 'true');
+      }
     }
 
-    // Permite alguns elementos específicos recarregarem a página
+    // Permite apenas o botão ENVIAR recarregar
     document.querySelector('button').setAttribute('data-permitido', 'true');
   </script>
 </body>
