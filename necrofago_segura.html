@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NECRÓFAGO - Núcleo de Controle</title>
   <style>
-    /* Seus estilos originais permanecem exatamente iguais */
+    /* [Seu CSS original permanece EXATAMENTE IGUAL] */
     body {
       background-color: #000;
       color: #0f0;
@@ -89,7 +89,7 @@
   </style>
 </head>
 <body>
-  <!-- Seu conteúdo HTML original permanece igual -->
+  <!-- [Seu HTML original permanece EXATAMENTE IGUAL] -->
   <div id="main">
     <img id="logo" src="https://cdn.glitch.global/85c0c604-0dea-4b74-942d-caabf5846256/thumbnails%2Fnecr%C3%B3fago_logo.png?1751802107893" alt="NECRÓFAGO">
     <div id="alerta" class="blink">⚠️ NECRÓFAGO DETECTOU A SUA PRESENÇA ⚠️</div>
@@ -115,75 +115,44 @@
   </audio>
 
   <script>
-    // ========== SISTEMA DE BLOQUEIO ROBUSTO ========== //
-    const BLOQUEIO_DURACAO = 4 * 60 * 1000; // 4 minutos para testes
-    const dataAtivacao = new Date("2025-07-11T03:33:00"); // Data alterada para testes
-    let bloqueioAtivo = false;
-    let tentativasRestantes = 3;
+    // ========== SISTEMA DE BLOQUEIO AVANÇADO ========== //
+    const BLOQUEIO_TEMPO = 4 * 60 * 1000; // 4 minutos em ms
+    let tempoInicio = Date.now();
 
-    // Verifica bloqueio existente ao carregar
-    if (sessionStorage.getItem('necrofago_bloqueio')) {
-      iniciarBloqueio();
+    // Verifica se está em estado de bloqueio
+    if (sessionStorage.getItem('necro_bloqueio')) {
+      const tempoBloqueio = parseInt(sessionStorage.getItem('necro_bloqueio_tempo'));
+      if (Date.now() - tempoBloqueio < BLOQUEIO_TEMPO) {
+        window.location.href = "bloqueio.html";
+      } else {
+        sessionStorage.removeItem('necro_bloqueio');
+        sessionStorage.removeItem('necro_bloqueio_tempo');
+      }
     }
 
-    function iniciarBloqueio() {
-      bloqueioAtivo = true;
-      sessionStorage.setItem('necrofago_bloqueio', 'true');
-      
-      // 1. Bloqueia teclas de atualização
-      document.addEventListener('keydown', function(e) {
-        if (bloqueioAtivo) {
-          // Bloqueia F5, Ctrl+R, Ctrl+F5, etc.
-          if (e.key === 'F5' || e.key === 'F11' || 
-             (e.ctrlKey && e.key === 'r') || 
-             (e.ctrlKey && e.key === 'F5') ||
-             (e.metaKey && e.key === 'r')) {
-            e.preventDefault();
-            e.stopImmediatePropagation();
-            window.location.reload(); // Força recarregar mantendo o bloqueio
-          }
-        }
-      });
-
-      // 2. Bloqueia botão direito e menu de contexto
-      document.addEventListener('contextmenu', function(e) {
-        if (bloqueioAtivo) {
-          e.preventDefault();
-          return false;
-        }
-      });
-
-      // 3. Manipula o evento beforeunload
-      window.addEventListener('beforeunload', function(e) {
-        if (bloqueioAtivo) {
-          e.preventDefault();
-          // Mensagem que aparece ao tentar fechar
-          e.returnValue = 'A NECRÓFAGO bloqueou esta sessão. Suas tentativas não serão resetadas.';
-          return e.returnValue;
-        }
-      });
-
-      // 4. Verificação periódica para evitar bypass
-      setInterval(() => {
-        if (bloqueioAtivo) {
-          sessionStorage.setItem('necrofago_bloqueio', 'true');
-        }
-      }, 1000);
-
-      // Remove o bloqueio após o tempo estipulado
-      setTimeout(() => {
-        finalizarBloqueio();
-      }, BLOQUEIO_DURACAO);
+    // Armazena o estado inicial
+    if (!sessionStorage.getItem('necro_inicio')) {
+      sessionStorage.setItem('necro_inicio', tempoInicio.toString());
+      sessionStorage.setItem('necro_tentativas', '0');
+      sessionStorage.setItem('necro_tempo_restante', '1200'); // 20min em segundos
     }
 
-    function finalizarBloqueio() {
-      bloqueioAtivo = false;
-      sessionStorage.removeItem('necrofago_bloqueio');
-      window.location.reload();
+    // Monitora atualizações não autorizadas
+    window.addEventListener('beforeunload', function(e) {
+      if (!e.target.activeElement.hasAttribute('data-permitido')) {
+        ativarBloqueio();
+      }
+    });
+
+    function ativarBloqueio() {
+      sessionStorage.setItem('necro_bloqueio', 'true');
+      sessionStorage.setItem('necro_bloqueio_tempo', Date.now().toString());
     }
 
-    // ========== SEU CÓDIGO ORIGINAL (COM MODIFICAÇÕES) ========== //
+    // ========== CÓDIGO ORIGINAL (COM ADAPTAÇÕES MINIMAS) ========== //
+    const dataAtivacao = new Date("2025-07-11T12:03:00");
     const agora = new Date();
+
     if (agora < dataAtivacao) {
       document.body.innerHTML = `
         <style>
@@ -212,7 +181,8 @@
       throw new Error("Acesso bloqueado por horário.");
     }
 
-    let tempo = 20 * 60;
+    let tempo = parseInt(sessionStorage.getItem('necro_tempo_restante')) || 20 * 60;
+    let tentativas = parseInt(sessionStorage.getItem('necro_tentativas')) || 0;
     let bloqueado = false;
 
     const timerEl = document.getElementById("timer");
@@ -233,10 +203,12 @@
       const segundos = tempo % 60;
       timerEl.textContent = `Tempo restante: ${minutos}:${segundos.toString().padStart(2, '0')}`;
       tempo--;
+      sessionStorage.setItem('necro_tempo_restante', tempo.toString());
 
       if (tempo < 0) {
         clearInterval(intervalo);
-        mostrarTelaCheia("⛔ Janela de reinicialização encerrada. Uma nova janela ocorrerá na próxima migração da NECRÓFAGO.", "red");
+        ativarBloqueio();
+        mostrarTelaCheia("⛔ TEMPO ESGOTADO - Bloqueio ativado", "red");
         sirene.pause();
       }
     }
@@ -246,24 +218,28 @@
     }
 
     function tocarSirene() {
-      if (!bloqueado && !bloqueioAtivo) {
+      if (!bloqueado) {
         sirene.play().catch(e => console.log("Erro na sirene:", e));
       }
     }
 
     function verificarComando() {
-      if (bloqueado || bloqueioAtivo) return;
+      if (bloqueado) return;
 
       const comando = document.getElementById("comando").value.trim();
 
       if (comando === "REBOOT-NECRO") {
+        sessionStorage.clear();
         reiniciarNecrofago();
       } else {
-        tentativasRestantes--;
-        if (tentativasRestantes <= 0) {
+        tentativas++;
+        sessionStorage.setItem('necro_tentativas', tentativas.toString());
+        
+        if (tentativas >= 3) {
+          ativarBloqueio();
           bloquearAcesso();
         } else {
-          resposta.innerHTML = `<p style="color:red;">❌ Comando incorreto. Tentativas restantes: ${tentativasRestantes}</p>`;
+          resposta.innerHTML = `<p style="color:red;">❌ Comando incorreto. Tentativas restantes: ${3 - tentativas}</p>`;
         }
       }
     }
@@ -299,8 +275,8 @@
       bloqueado = true;
       clearInterval(intervalo);
       sirene.pause();
-      mostrarTelaCheia("🚫 ACESSO BLOQUEADO PERMANENTEMENTE.", "red");
-      iniciarBloqueio(); // Ativa o sistema anti-atualização
+      mostrarTelaCheia("🚫 ACESSO BLOQUEADO - Redirecionando...", "red");
+      setTimeout(() => { window.location.href = "bloqueio.html"; }, 2000);
     }
 
     function mostrarTelaCheia(mensagem, cor) {
@@ -309,6 +285,9 @@
       tela.innerHTML = `<div style="color:${cor}; font-size:2em;">${mensagem}</div>`;
       document.body.appendChild(tela);
     }
+
+    // Permite alguns elementos específicos recarregarem a página
+    document.querySelector('button').setAttribute('data-permitido', 'true');
   </script>
 </body>
 </html>
