@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prova Segura - NECRÓFAGO</title>
+  <style>
+    body {
+      background-color: #000;
+      color: #0f0;
+      font-family: 'Courier New', monospace;
+      text-align: center;
+      padding: 50px;
+      margin: 0;
+    }
+    .blink {
+      animation: blink 1s infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    #container {
+      margin-top: 30px;
+    }
+    input, button {
+      background-color: #111;
+      color: #0f0;
+      border: 1px solid #0f0;
+      padding: 10px;
+      font-size: 1em;
+      margin: 10px;
+    }
+    #timer {
+      color: yellow;
+      font-size: 1.5em;
+      margin: 20px 0;
+    }
+    .tela-bloqueio {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      z-index: 1000;
+      color: red;
+      font-size: 2em;
+    }
+  </style>
+</head>
+<body>
+  <div id="main">
+    <h1>PROVA ELETRÔNICA SEGURA</h1>
+    <div id="timer">Tempo restante: 20:00</div>
+    
+    <div id="container">
+      <p>Insira o código de acesso da equipe:</p>
+      <input type="password" id="senha" placeholder="Digite o código...">
+      <button onclick="verificarAcesso()">ACESSAR</button>
+      <div id="aviso" style="color: orange; margin-top: 15px;"></div>
+    </div>
+  </div>
+
+  <script>
+    // Configurações da prova
+    const SENHA_CORRETA = "NECRO123"; // Altere para cada equipe!
+    const TEMPO_TOTAL = 20 * 60; // 20 minutos em segundos
+    const MAX_TENTATIVAS = 3;
+
+    // Estado persistente (sobrevive ao F5)
+    let estado = {
+      tentativas: parseInt(localStorage.getItem('tentativas')) || 0,
+      tempoRestante: parseInt(localStorage.getItem('tempoRestante')) || TEMPO_TOTAL,
+      bloqueado: localStorage.getItem('bloqueado') === 'true'
+    };
+
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', () => {
+      if (estado.bloqueado) {
+        mostrarBloqueio();
+      } else {
+        iniciarTemporizador();
+      }
+    });
+
+    // Controle do tempo
+    function iniciarTemporizador() {
+      const timer = setInterval(() => {
+        estado.tempoRestante--;
+        localStorage.setItem('tempoRestante', estado.tempoRestante);
+        
+        const minutos = Math.floor(estado.tempoRestante / 60);
+        const segundos = estado.tempoRestante % 60;
+        document.getElementById('timer').textContent = 
+          `Tempo restante: ${minutos}:${segundos.toString().padStart(2, '0')}`;
+
+        if (estado.tempoRestante <= 0) {
+          clearInterval(timer);
+          estado.bloqueado = true;
+          localStorage.setItem('bloqueado', 'true');
+          mostrarBloqueio("⏰ TEMPO ESGOTADO");
+        }
+      }, 1000);
+    }
+
+    // Verificação de acesso
+    function verificarAcesso() {
+      if (estado.bloqueado) return;
+
+      const senhaInserida = document.getElementById('senha').value;
+      if (senhaInserida === SENHA_CORRETA) {
+        localStorage.setItem('acessoLiberado', 'true');
+        window.location.href = "pagina_da_prova.html"; // Redireciona se acertar
+      } else {
+        estado.tentativas++;
+        localStorage.setItem('tentativas', estado.tentativas);
+        
+        if (estado.tentativas >= MAX_TENTATIVAS) {
+          estado.bloqueado = true;
+          localStorage.setItem('bloqueado', 'true');
+          mostrarBloqueio("🚫 ACESSO BLOQUEADO");
+        } else {
+          document.getElementById('aviso').textContent = 
+            `Código incorreto! Tentativas restantes: ${MAX_TENTATIVAS - estado.tentativas}`;
+        }
+      }
+    }
+
+    // Tela de bloqueio
+    function mostrarBloqueio(mensagem = "🚫 ACESSO BLOQUEADO") {
+      document.body.innerHTML = `
+        <div class="tela-bloqueio">
+          <h1 class="blink">${mensagem}</h1>
+          <p>Você excedeu o limite de tentativas ou o tempo acabou.</p>
+          <p>A página será automaticamente reiniciada em <span id="contador">5:00</span></p>
+        </div>
+      `;
+
+      let tempoReset = 5 * 60; // 5 minutos para reset
+      const timer = setInterval(() => {
+        tempoReset--;
+        const minutos = Math.floor(tempoReset / 60);
+        const segundos = tempoReset % 60;
+        document.getElementById('contador').textContent = `${minutos}:${segundos.toString().padStart(2, '0')}`;
+
+        if (tempoReset <= 0) {
+          clearInterval(timer);
+          localStorage.clear();
+          window.location.reload();
+        }
+      }, 1000);
+    }
+
+    // Bloqueia atualizações e comandos de recarregar
+    window.addEventListener('beforeunload', (e) => {
+      if (!estado.bloqueado) {
+        e.preventDefault();
+        e.returnValue = 'A prova será bloqueada se você sair. Tem certeza?';
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey && e.key === 'r') || e.key === 'F5') {
+        e.preventDefault();
+        alert('Atualização desabilitada durante a prova!');
+      }
+    });
+  </script>
+</body>
+</html>
