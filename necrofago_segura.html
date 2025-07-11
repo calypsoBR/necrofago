@@ -235,45 +235,39 @@
     }
 
     function reiniciarNecrofago() {
-  // Verifica se já está na tela de sucesso
-  if (sessionStorage.getItem('necro_musica_tocando')) {
-    daisy.play().catch(() => {}); // Toca música sem mostrar erros
-    return;
-  }
+      clearInterval(intervalo);
+      sirene.pause();
+      
+      // Previne qualquer atualização
+      window.addEventListener('beforeunload', function(e) {
+        e.preventDefault();
+      });
 
-  // Primeira execução
-  sessionStorage.setItem('necro_musica_tocando', 'true');
-  clearInterval(intervalo);
-  sirene.pause();
+      // Toca música sem reiniciar ao atualizar
+      if (daisy.paused) {
+        daisy.play().catch(e => {
+          console.log("Erro na música:", e);
+          document.getElementById("resposta").innerHTML = "<p style='color:orange;'>🔇 Ative o som para ouvir a música</p>";
+        });
+      }
 
-  // Bloqueia F5 sem redirecionar
-  window.addEventListener('beforeunload', function(e) {
-    e.preventDefault();
-  });
-
-  // Toca música
-  daisy.play().catch(e => {
-    document.getElementById("resposta").innerHTML = "<p style='color:orange;'>🔇 Ative o som para ouvir a música</p>";
-  });
-
-  // Animação (MANTIDO IGUAL)
-  const tela = document.createElement("div");
-  tela.className = "tela-cheia";
-  document.body.appendChild(tela);
-  
-  setTimeout(() => {
-    tela.innerHTML = '<div class="blink" style="color:red;font-size:2em;">🧠 NECRÓFAGO SENDO REINICIALIZADA...</div>';
-    
-    setTimeout(() => {
-      tela.innerHTML = `
-        <div class="fade-in" style="color:lime;font-size:2em;margin-bottom:20px;">
-          ✅ Sucesso! Você conseguiu destruir a Necrófago!
-        </div>
-        <img class="dancing-couple" src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExemt1enVwbDg3ZnYyd2V1MXEwajNsYXoxYWc1Zmo1d2pqZGNrMjVyeiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3ornjRp9AZrq594Mms/giphy.gif" alt="Dança clássica">
-      `;
-    }, 5000);
-  }, 7000);
-}
+      const tela = document.createElement("div");
+      tela.className = "tela-cheia";
+      document.body.appendChild(tela);
+      
+      setTimeout(() => {
+        tela.innerHTML = '<div class="blink" style="color:red;font-size:2em;">🧠 NECRÓFAGO SENDO REINICIALIZADA...</div>';
+        
+        setTimeout(() => {
+          tela.innerHTML = `
+            <div class="fade-in" style="color:lime;font-size:2em;margin-bottom:20px;">
+              ✅ Sucesso! Você conseguiu destruir a Necrófago!
+            </div>
+            <img class="dancing-couple" src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExemt1enVwbDg3ZnYyd2V1MXEwajNsYXoxYWc1Zmo1d2pqZGNrMjVyeiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3ornjRp9AZrq594Mms/giphy.gif" alt="Dança clássica">
+          `;
+        }, 5000);
+      }, 7000);
+    }
 
     function bloquearAcesso() {
       bloqueado = true;
