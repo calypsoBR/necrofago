@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NECRÓFAGO - Núcleo de Controle</title>
   <style>
+    /* [SEU CSS ORIGINAL - MANTIDO INTACTO] */
     body {
       background-color: #000;
       color: #0f0;
@@ -88,6 +89,7 @@
   </style>
 </head>
 <body>
+  <!-- [SEU HTML ORIGINAL] -->
   <div id="main">
     <img id="logo" src="https://cdn.glitch.global/85c0c604-0dea-4b74-942d-caabf5846256/thumbnails%2Fnecr%C3%B3fago_logo.png?1751802107893" alt="NECRÓFAGO">
     <div id="alerta" class="blink">⚠️ NECRÓFAGO DETECTOU A SUA PRESENÇA ⚠️</div>
@@ -98,7 +100,7 @@
       <input type="text" id="comando" placeholder="Digite o comando..." 
              onclick="mostrarPermissao(); tocarSirene()" 
              onfocus="tocarSirene()">
-      <button onclick="verificarComando()">ENVIAR</button>
+      <button id="btnEnviar">ENVIAR</button>
       <div id="resposta"></div>
       <div id="timer">Tempo restante: 20:00</div>
     </div>
@@ -113,9 +115,18 @@
   </audio>
 
   <script>
-    
-    // Controle de data/hora (versão anterior)
-    const dataAtivacao = new Date("2025-07-11T12:03:00"); // ⚠️ Altere para sua data!
+    // ========== SISTEMA DE BLOQUEIO AVANÇADO ========== //
+    const BLOQUEIO_TEMPO = 4 * 60 * 1000; // 4 minutos (oculto)
+    let intervalo;
+
+    // Verifica se deve bloquear
+    if (sessionStorage.getItem('necro_bloqueio_global')) {
+      window.location.href = "bloqueio.html";
+    }
+
+    // ========== CÓDIGO ORIGINAL REVISADO ========== //
+    // Controle de data/hora
+    const dataAtivacao = new Date("2025-07-11T12:03:00");
     const agora = new Date();
 
     if (agora < dataAtivacao) {
@@ -146,23 +157,38 @@
       throw new Error("Acesso bloqueado por horário.");
     }
 
-
+    // Inicialização
     let tempo = 20 * 60;
     let tentativas = 0;
     let bloqueado = false;
 
     const timerEl = document.getElementById("timer");
-    const container = document.getElementById("container");
     const daisy = document.getElementById("daisy");
     const sirene = document.getElementById("sirene");
     const alerta = document.getElementById("alerta");
     const resposta = document.getElementById("resposta");
+    const btnEnviar = document.getElementById("btnEnviar");
 
-    setTimeout(() => {
-      alerta.style.display = "block";
-    }, 2000);
+    // Bloqueia F5 na tela inicial
+    window.addEventListener('beforeunload', function(e) {
+      if (!sessionStorage.getItem('necro_estado')) {
+        e.preventDefault();
+        sessionStorage.setItem('necro_bloqueio_global', 'true');
+        window.location.href = "bloqueio.html";
+      }
+    });
 
-    const intervalo = setInterval(updateTimer, 1000);
+    // Verifica estado anterior
+    const estado = sessionStorage.getItem('necro_estado');
+    if (estado === 'sucesso') {
+      reiniciarNecrofago();
+    } else if (estado === 'bloqueado') {
+      bloquearAcesso();
+    } else {
+      // Inicia temporizador normalmente
+      setTimeout(() => { alerta.style.display = "block"; }, 2000);
+      intervalo = setInterval(updateTimer, 1000);
+    }
 
     function updateTimer() {
       const minutos = Math.floor(tempo / 60);
@@ -172,8 +198,8 @@
 
       if (tempo < 0) {
         clearInterval(intervalo);
-        mostrarTelaCheia("⛔ Janela de reinicialização encerrada. Uma nova janela ocorrerá na próxima migração da NECRÓFAGO.", "red");
-        sirene.pause();
+        sessionStorage.setItem('necro_estado', 'bloqueado');
+        bloquearAcesso();
       }
     }
 
@@ -187,19 +213,23 @@
       }
     }
 
+    btnEnviar.addEventListener('click', verificarComando);
+
     function verificarComando() {
       if (bloqueado) return;
 
       const comando = document.getElementById("comando").value.trim();
 
       if (comando === "REBOOT-NECRO") {
+        sessionStorage.setItem('necro_estado', 'sucesso');
         reiniciarNecrofago();
       } else {
         tentativas++;
+        resposta.innerHTML = `<p style="color:red;">❌ Comando incorreto. Tentativas restantes: ${3 - tentativas}</p>`;
+        
         if (tentativas >= 3) {
+          sessionStorage.setItem('necro_estado', 'bloqueado');
           bloquearAcesso();
-        } else {
-          resposta.innerHTML = `<p style="color:red;">❌ Comando incorreto. Tentativas restantes: ${3 - tentativas}</p>`;
         }
       }
     }
@@ -208,10 +238,18 @@
       clearInterval(intervalo);
       sirene.pause();
       
-      daisy.play().catch(e => {
-        console.log("Erro na música:", e);
-        document.getElementById("resposta").innerHTML = "<p style='color:orange;'>🔇 Ative o som para ouvir a música</p>";
+      // Previne qualquer atualização
+      window.addEventListener('beforeunload', function(e) {
+        e.preventDefault();
       });
+
+      // Toca música sem reiniciar ao atualizar
+      if (daisy.paused) {
+        daisy.play().catch(e => {
+          console.log("Erro na música:", e);
+          document.getElementById("resposta").innerHTML = "<p style='color:orange;'>🔇 Ative o som para ouvir a música</p>";
+        });
+      }
 
       const tela = document.createElement("div");
       tela.className = "tela-cheia";
@@ -235,13 +273,26 @@
       bloqueado = true;
       clearInterval(intervalo);
       sirene.pause();
-      mostrarTelaCheia("🚫 ACESSO BLOQUEADO PERMANENTEMENTE.", "red");
+      
+      // Previne qualquer atualização
+      window.addEventListener('beforeunload', function(e) {
+        e.preventDefault();
+      });
+
+      mostrarTelaCheia(`
+        <div style="color:red; font-size:2em;">
+          🚫 ACESSO BLOQUEADO PERMANENTEMENTE
+        </div>
+        <p style="color:#0f0; margin-top:20px;">
+          Você excedeu o limite de tentativas permitidas.
+        </p>
+      `);
     }
 
-    function mostrarTelaCheia(mensagem, cor) {
+    function mostrarTelaCheia(mensagem) {
       const tela = document.createElement("div");
       tela.className = "tela-cheia";
-      tela.innerHTML = `<div style="color:${cor}; font-size:2em;">${mensagem}</div>`;
+      tela.innerHTML = mensagem;
       document.body.appendChild(tela);
     }
   </script>
