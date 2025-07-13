@@ -1,249 +1,40 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NECRÓFAGO - Núcleo de Controle</title>
-  <style>
-    body {
-      background-color: #000;
-      color: #0f0;
-      font-family: 'Courier New', monospace;
-      text-align: center;
-      padding: 50px;
-      margin: 0;
-    }
-    .blink {
-      animation: blink 1s infinite;
-    }
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0; }
-    }
-    #alerta {
-      color: red;
-      font-size: 1.5em;
-      display: none;
-    }
-    #permissao {
-      color: red;
-      font-size: 1.2em;
-      display: none;
-      margin: 20px 0;
-    }
-    #container {
-      margin-top: 30px;
-    }
-    input, button {
-      background-color: #111;
-      color: #0f0;
-      border: 1px solid #0f0;
-      padding: 10px;
-      font-size: 1em;
-      margin: 10px;
-    }
-    #timer {
-      color: yellow;
-      font-size: 1.5em;
-      margin: 20px 0;
-    }
-    #logo {
-      width: 150px;
-      margin-bottom: 20px;
-    }
-    .tela-cheia {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: #000;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      z-index: 100;
-    }
-    #resposta {
-      min-height: 30px;
-      margin: 10px 0;
-    }
-    .fade-in {
-      animation: fadeIn 3s;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    .dancing-couple {
-      width: 300px;
-      margin-top: 20px;
-      opacity: 0;
-      animation: fadeInGif 2.5s forwards 0.5s;
-    }
-    @keyframes fadeInGif {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-  </style>
-</head>
-<body>
-  <div id="main">
-    <img id="logo" src="https://cdn.glitch.global/85c0c604-0dea-4b74-942d-caabf5846256/thumbnails%2Fnecr%C3%B3fago_logo.png?1751802107893" alt="NECRÓFAGO">
-    <div id="alerta" class="blink">⚠️ NECRÓFAGO DETECTOU SUA PRESENÇA ⚠️</div>
-    <div id="permissao">Pare! Você não tem permissão para acessar este núcleo!</div>
-
-    <div id="container">
-      <p>Insira o comando de reinicialização:</p>
-      <input type="text" id="comando" placeholder="Digite o comando..." 
-             onclick="mostrarPermissao(); tocarSirene()" 
-             onfocus="tocarSirene()">
-      <button onclick="verificarComando()">ENVIAR</button>
-      <div id="resposta"></div>
-      <div id="timer">Tempo restante: 20:00</div>
-    </div>
-  </div>
-
-  <audio id="sirene" preload="auto" loop>
-    <source src="https://archive.org/download/siren-alarm-sound-effects/Siren%20Alarm%20Sound%20Effects.mp3" type="audio/mpeg">
-  </audio>
-
-  <audio id="daisy" preload="auto">
-    <source src="https://ia902807.us.archive.org/1/items/78_daisy-bell-bicycle-built-for-two_dana-harmonizers-dana-ensemble-harry-dacre_gbia0060910a/Daisy%20Bell%20Bicycle%20Buil%20-%20Dana%20Harmonizers%20%28Dana%20Ensemble%29.mp3" type="audio/mpeg">
-  </audio>
-
+  <title>Autenticação da Equipe</title>
   <script>
-    
-    // Controle de data/hora (versão anterior)
-    const dataAtivacao = new Date("2025-07-12T03:33:00"); // ⚠️ Altere para sua data!
-    const agora = new Date();
+    async function verificarCodigo(event) {
+      event.preventDefault();
+      const codigo = document.getElementById("codigo").value.trim().toUpperCase();
 
-    if (agora < dataAtivacao) {
-      document.body.innerHTML = `
-        <style>
-          body {
-            background-color: #000;
-            color: #fff;
-            font-family: 'Courier New', monospace;
-            text-align: center;
-            padding-top: 100px;
-          }
-          .negado {
-            color: red;
-            font-size: 3em;
-            animation: blink 1s infinite;
-          }
-          @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
-          }
-        </style>
-        <div>
-          <h1 class="negado">❌ ACESSO NEGADO!</h1>
-          <p>Acesse na data e hora correta da próxima janela de recertificação.</p>
-        </div>
-      `;
-      throw new Error("Acesso bloqueado por horário.");
-    }
+      try {
+        const response = await fetch("LINK_DO_ARQUIVO_JSON");
+        const data = await response.json();
 
-
-    let tempo = 20 * 60;
-    let tentativas = 0;
-    let bloqueado = false;
-
-    const timerEl = document.getElementById("timer");
-    const container = document.getElementById("container");
-    const daisy = document.getElementById("daisy");
-    const sirene = document.getElementById("sirene");
-    const alerta = document.getElementById("alerta");
-    const resposta = document.getElementById("resposta");
-
-    setTimeout(() => {
-      alerta.style.display = "block";
-    }, 2000);
-
-    const intervalo = setInterval(updateTimer, 1000);
-
-    function updateTimer() {
-      const minutos = Math.floor(tempo / 60);
-      const segundos = tempo % 60;
-      timerEl.textContent = `Tempo restante: ${minutos}:${segundos.toString().padStart(2, '0')}`;
-      tempo--;
-
-      if (tempo < 0) {
-        clearInterval(intervalo);
-        mostrarTelaCheia("⛔ Janela de reinicialização encerrada. Uma nova janela ocorrerá na próxima migração da NECRÓFAGO.", "red");
-        sirene.pause();
-      }
-    }
-
-    function mostrarPermissao() {
-      document.getElementById("permissao").style.display = "block";
-    }
-
-    function tocarSirene() {
-      if (!bloqueado) {
-        sirene.play().catch(e => console.log("Erro na sirene:", e));
-      }
-    }
-
-    function verificarComando() {
-      if (bloqueado) return;
-
-      const comando = document.getElementById("comando").value.trim();
-
-      if (comando === "REBOOT-NECRO") {
-        reiniciarNecrofago();
-      } else {
-        tentativas++;
-        if (tentativas >= 3) {
-          bloquearAcesso();
+        if (data.includes(codigo)) {
+          window.location.href = "index.html";
         } else {
-          resposta.innerHTML = `<p style="color:red;">❌ Comando incorreto. Tentativas restantes: ${3 - tentativas}</p>`;
-        }
-      }
-    }
-
-    function reiniciarNecrofago() {
-      clearInterval(intervalo);
-      sirene.pause();
-      
-      daisy.play().catch(e => {
-        console.log("Erro na música:", e);
-        document.getElementById("resposta").innerHTML = "<p style='color:orange;'>🔇 Ative o som para ouvir a música</p>";
-      });
-
-      const tela = document.createElement("div");
-      tela.className = "tela-cheia";
-      document.body.appendChild(tela);
-      
-      setTimeout(() => {
-        tela.innerHTML = '<div class="blink" style="color:red;font-size:2em;">🧠 NECRÓFAGO SENDO REINICIALIZADA...</div>';
-        
-        setTimeout(() => {
-          tela.innerHTML = `
-            <div class="fade-in" style="color:lime;font-size:2em;margin-bottom:20px;">
-              ✅ Sucesso! Você conseguiu destruir a Necrófago!
-            </div>
-            <img class="dancing-couple" src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExemt1enVwbDg3ZnYyd2V1MXEwajNsYXoxYWc1Zmo1d2pqZGNrMjVyeiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3ornjRp9AZrq594Mms/giphy.gif" alt="Dança clássica">
+          document.getElementById("mensagem").innerHTML = `
+            <p style="color:red;">
+              Código não encontrado. Você precisa primeiro responder ao formulário no link abaixo:
+            </p>
+            https://docs.google.com/forms/d/e/1FAIpQLSefBvc7r6Ibr33prhCd46oCbtSGIjvB5YKtYuZbAdkbJD0VBA/viewform?usp=dialog          
           `;
-        }, 5000);
-      }, 7000);
-    }
-
-    function bloquearAcesso() {
-      bloqueado = true;
-      clearInterval(intervalo);
-      sirene.pause();
-      mostrarTelaCheia("🚫 ACESSO BLOQUEADO PERMANENTEMENTE.", "red");
-    }
-
-    function mostrarTelaCheia(mensagem, cor) {
-      const tela = document.createElement("div");
-      tela.className = "tela-cheia";
-      tela.innerHTML = `<div style="color:${cor}; font-size:2em;">${mensagem}</div>`;
-      document.body.appendChild(tela);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar o arquivo JSON:", error);
+      }
     }
   </script>
+</head>
+<body>
+  <h2>Autenticação da Equipe</h2>
+  <form onsubmit="verificarCodigo(event)">
+    <label for="codigo">Digite o código da sua equipe (tudo maiúsculo):</label><br>
+    <input type="text" id="codigo" name="codigo" required><br><br>
+    <button type="submit">Acessar</button>
+  </form>
+  <div id="mensagem" style="margin-top:20px;"></div>
 </body>
 </html>
