@@ -8,6 +8,16 @@
       text-align: center;
     }
   </style>
+</head>
+<body>
+  <h2>Autenticação de Equipes para acesso ao site da Necrófago</h2>
+  <form onsubmit="verificarCodigo(event)">
+    <label for="codigo">Digite o código da sua equipe (tudo maiúsculo):</label><br>
+    <input type="text" id="codigo" name="codigo" required><br><br>
+    <button type="submit">Acessar</button>
+  </form>
+  <div id="mensagem" style="margin-top:20px;"></div>
+
   <script>
     async function verificarCodigo(event) {
       event.preventDefault();
@@ -24,22 +34,20 @@
             <p style="color:red;">
               Código não encontrado. Você precisa primeiro responder ao formulário no link abaixo:
             </p>
-            https://docs.google.com/forms/d/e/1FAIpQLSefBvc7r6Ibr33prhCd46oCbtSGIjvB5YKtYuZbAdkbJD0VBA/viewform?usp=dialog
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLSefBvc7r6Ibr33prhCd46oCbtSGIjvB5YKtYuZbAdkbJD0VBA/viewform?usp=dialog" target="_blank">
+              Formulário
+            </a>
           `;
         }
       } catch (error) {
         console.error("Erro ao carregar o arquivo JSON:", error);
+        document.getElementById("mensagem").innerHTML = `
+          <p style="color:red;">
+            Ocorreu um erro ao tentar acessar os dados. Tente novamente mais tarde.
+          </p>
+        `;
       }
     }
   </script>
-</head>
-<body>
-  <h2>Autenticação de Equipes para acesso ao site da Necrófago</h2>
-  <form onsubmit="verificarCodigo(event)">
-    <label for="codigo">Digite o código da sua equipe (tudo maiúsculo):</label><br>
-    <input type="text" id="codigo" name="codigo" required><br><br>
-    <button type="submit">Acessar</button>
-  </form>
-  <div id="mensagem" style="margin-top:20px;"></div>
 </body>
 </html>
