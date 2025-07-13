@@ -24,7 +24,7 @@
       const codigo = document.getElementById("codigo").value.trim().toUpperCase();
 
       try {
-        const response = await fetch("https://ufpabr-my.sharepoint.com/:u:/g/personal/rmr_ufpa_br/EYwnrrFPGi9AnB3fT9gY20MBQueMShA0YeuteZq8mGZVPQ?e=29vWDM");
+        const response = await fetch("equipes.json");
         const data = await response.json();
 
         if (data.some(equipe => equipe.codigo === codigo)) {
