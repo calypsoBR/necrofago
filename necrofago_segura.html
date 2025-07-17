@@ -282,11 +282,14 @@
             </div>
             <img class="dancing-couple" src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExemt1enVwbDg3ZnYyd2V1MXEwajNsYXoxYWc1Zmo1d2pqZGNrMjVyeiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3ornjRp9AZrq594Mms/giphy.gif" alt="Dança clássica">
           `;
-          // Nova parte: quando a música terminar, mostra "FIM"
-            daisy.onended = function() {
-            tela.innerHTML = '<h1 style="color: yellow; font-size: 5em;">FIM</h1>';
-            tela.style.background = "#000";
-            };
+         
+          // Garante que a música está tocando antes de registrar o evento
+            daisy.play().then(() => {
+              daisy.onended = function() {
+                tela.innerHTML = '<h1 style="color: yellow; font-size: 5em; text-shadow: 0 0 10px #ff0;">FIM</h1>';
+                tela.style.background = "#000";
+              };
+            }).catch(e => console.log("Erro na música:", e));
 
         }, 5000);
       }, 7000);
