@@ -142,10 +142,12 @@
 
     // ========== CÓDIGO ORIGINAL REVISADO ========== //
     // Controle de data/hora
-    const dataAtivacao = new Date("2025-07-15T12:03:00");
+    const dataAtivacao = new Date("2025-07-15T12:03:00"); // Data/hora INICIAL
+    const dataExpiracao = new Date("2025-07-20T23:59:00"); // Data/hora FINAL
+    
     const agora = new Date();
 
-    if (agora < dataAtivacao) {
+    if (agora < dataAtivacao || agora > dataExpiracao) {
       document.body.innerHTML = `
         <style>
           body {
