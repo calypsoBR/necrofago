@@ -115,8 +115,24 @@
   </audio>
 
   <script>
-    // ========== SISTEMA DE BLOQUEIO AVANÇADO ========== //
-    const BLOQUEIO_TEMPO = 4 * 60 * 1000; // 4 minutos (oculto)
+   
+   // BLOQUEIA TENTATIVAS DE ACESSAR O CÓDIGO HTML VIA botão direito, Ctrl+U, Ctrl+Shift+I, F12, etc.
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.onkeydown = (e) => {
+      if (
+        e.ctrlKey && (e.key === 'u' || e.key === 'U') || 
+        e.key === 'F12' ||
+        e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i')
+      ) {
+        e.preventDefault();
+        alert("Código-fonte protegido!");
+        return false;
+      }
+    }; 
+    
+    
+    // ========== SISTEMA DE BLOQUEIO CONTRA ATUALIZAÇÃO DE PAGINA ========== //
+    const BLOQUEIO_TEMPO = 20 * 60 * 1000; // 20 minutos (oculto)
     let intervalo;
 
     // Verifica se deve bloquear
@@ -126,7 +142,7 @@
 
     // ========== CÓDIGO ORIGINAL REVISADO ========== //
     // Controle de data/hora
-    const dataAtivacao = new Date("2025-07-11T12:03:00");
+    const dataAtivacao = new Date("2025-07-15T12:03:00");
     const agora = new Date();
 
     if (agora < dataAtivacao) {
@@ -215,35 +231,26 @@
 
     btnEnviar.addEventListener('click', verificarComando);
 
-  async function verificarComando() {
-  if (bloqueado) return;
+    function verificarComando() {
+      if (bloqueado) return;
 
-  const comando = document.getElementById("comando").value.trim();
-  
-  try {
-    // 1. Busca a senha do arquivo (usando variável respostaFetch para evitar conflito)
-    const respostaFetch = await fetch("doorway.txt");
-    const senhaCorreta = (await respostaFetch.text()).trim();
+      const comando = document.getElementById("comando").value.trim();
+      const senhaOculta = window.atob("eXNpYWQ="); // comando guardado em "doorway", codificado em Base64.
 
-    // 2. Verificação (usa a variável original "resposta" do DOM)
-    if (comando === senhaCorreta) {
-      sessionStorage.setItem('necro_estado', 'sucesso');
-      reiniciarNecrofago();
-    } else {
-      tentativas++;
-      resposta.innerHTML = `<p style="color:red;">❌ Comando incorreto. Tentativas restantes: ${3 - tentativas}</p>`;
-      
-      if (tentativas >= 3) {
-        sessionStorage.setItem('necro_estado', 'bloqueado');
-        bloquearAcesso();
+      if (comando === senhaOculta) {
+        sessionStorage.setItem('necro_estado', 'sucesso');
+        reiniciarNecrofago();
+      } else {
+        tentativas++;
+        resposta.innerHTML = `<p style="color:red;">❌ Comando incorreto. Tentativas restantes: ${3 - tentativas}</p>`;
+        
+        if (tentativas >= 3) {
+          sessionStorage.setItem('necro_estado', 'bloqueado');
+          bloquearAcesso();
+        }
       }
     }
-  } catch (erro) {
-    console.error("Erro ao carregar a senha:", erro);
-    resposta.innerHTML = `<p style="color:red;">⚠️ Erro no sistema. Tente novamente.</p>`;
-  }
-}
-    
+
     function reiniciarNecrofago() {
       clearInterval(intervalo);
       sirene.pause();
