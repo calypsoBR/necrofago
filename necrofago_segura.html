@@ -223,7 +223,7 @@
 
   try {
     // Busca a senha do arquivo .txt (apenas esta linha é nova!)
-    const resposta = await fetch(urlSenha);
+    const respostaFetch = await fetch(urlSenha);
     const senhaCorreta = (await resposta.text()).trim();
 
     // A partir daqui, tudo é IGUAL ao seu código original!
