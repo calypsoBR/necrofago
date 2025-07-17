@@ -219,14 +219,13 @@
   if (bloqueado) return;
 
   const comando = document.getElementById("comando").value.trim();
-  const urlSenha = 'https://calypsobr.github.io/necrofago/doorway.txt'; // ← URL do seu arquivo    
-
+  
   try {
-    // Busca a senha do arquivo .txt (apenas esta linha é nova!)
-    const respostaFetch = await fetch(urlSenha);
-    const senhaCorreta = (await resposta.text()).trim();
+    // 1. Busca a senha do arquivo (usando variável respostaFetch para evitar conflito)
+    const respostaFetch = await fetch("doorway.txt");
+    const senhaCorreta = (await respostaFetch.text()).trim();
 
-    // A partir daqui, tudo é IGUAL ao seu código original!
+    // 2. Verificação (usa a variável original "resposta" do DOM)
     if (comando === senhaCorreta) {
       sessionStorage.setItem('necro_estado', 'sucesso');
       reiniciarNecrofago();
@@ -241,7 +240,7 @@
     }
   } catch (erro) {
     console.error("Erro ao carregar a senha:", erro);
-    resposta.innerHTML = `<p style="color:red;">Erro ao validar. Recarregue a página.</p>`;
+    resposta.innerHTML = `<p style="color:red;">⚠️ Erro no sistema. Tente novamente.</p>`;
   }
 }
     
