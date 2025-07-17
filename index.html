@@ -115,7 +115,23 @@
   </audio>
 
   <script>
-    // ========== SISTEMA DE BLOQUEIO AVANÇADO ========== //
+   
+   // BLOQUEIA TENTATIVAS DE ACESSAR O CÓDIGO HTML VIA botão direito, Ctrl+U, Ctrl+Shift+I, F12, etc.
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.onkeydown = (e) => {
+      if (
+        e.ctrlKey && (e.key === 'u' || e.key === 'U') || 
+        e.key === 'F12' ||
+        e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i')
+      ) {
+        e.preventDefault();
+        alert("Código-fonte protegido!");
+        return false;
+      }
+    }; 
+    
+    
+    // ========== SISTEMA DE BLOQUEIO CONTRA ATUALIZAÇÃO DE PAGINA ========== //
     const BLOQUEIO_TEMPO = 20 * 60 * 1000; // 20 minutos (oculto)
     let intervalo;
 
@@ -126,10 +142,12 @@
 
     // ========== CÓDIGO ORIGINAL REVISADO ========== //
     // Controle de data/hora
-    const dataAtivacao = new Date("2025-07-15T12:03:00");
+    const dataAtivacao = new Date("2025-07-15T12:03:00"); // Data/hora INICIAL
+    const dataExpiracao = new Date("2025-07-17T17:31:00"); // Data/hora FINAL
+    
     const agora = new Date();
 
-    if (agora < dataAtivacao) {
+    if (agora < dataAtivacao || agora > dataExpiracao) {
       document.body.innerHTML = `
         <style>
           body {
@@ -154,7 +172,7 @@
           <p>Acesse na data e hora correta da próxima janela de recertificação.</p>
         </div>
       `;
-      throw new Error("Acesso bloqueado por horário.");
+      throw new Error("Fora do período de acesso permitido.");
     }
 
     // Inicialização
@@ -219,8 +237,9 @@
       if (bloqueado) return;
 
       const comando = document.getElementById("comando").value.trim();
+      const senhaOculta = window.atob("eXNpYWQ="); // comando guardado em "doorway", codificado em Base64.
 
-      if (comando === "ysiad") {
+      if (comando === senhaOculta) {
         sessionStorage.setItem('necro_estado', 'sucesso');
         reiniciarNecrofago();
       } else {
@@ -265,6 +284,15 @@
             </div>
             <img class="dancing-couple" src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExemt1enVwbDg3ZnYyd2V1MXEwajNsYXoxYWc1Zmo1d2pqZGNrMjVyeiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3ornjRp9AZrq594Mms/giphy.gif" alt="Dança clássica">
           `;
+         
+          // Garante que a música está tocando antes de registrar o evento
+            daisy.play().then(() => {
+              daisy.onended = function() {
+                tela.innerHTML = '<h1 style="color: yellow; font-size: 5em; text-shadow: 0 0 10px #ff0;">FIM</h1>';
+                tela.style.background = "#000";
+              };
+            }).catch(e => console.log("Erro na música:", e));
+
         }, 5000);
       }, 7000);
     }
