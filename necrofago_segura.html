@@ -215,25 +215,36 @@
 
     btnEnviar.addEventListener('click', verificarComando);
 
-    function verificarComando() {
-      if (bloqueado) return;
+  async function verificarComando() {
+  if (bloqueado) return;
 
-      const comando = document.getElementById("comando").value.trim();
+  const comando = document.getElementById("comando").value.trim();
+  const urlSenha = 'https://raw.githubusercontent.com/seu-usuario/seu-repo/main/config.txt'; // ← URL do seu arquivo
 
-      if (comando === "REBOOT-NECRO") {
-        sessionStorage.setItem('necro_estado', 'sucesso');
-        reiniciarNecrofago();
-      } else {
-        tentativas++;
-        resposta.innerHTML = `<p style="color:red;">❌ Comando incorreto. Tentativas restantes: ${3 - tentativas}</p>`;
-        
-        if (tentativas >= 3) {
-          sessionStorage.setItem('necro_estado', 'bloqueado');
-          bloquearAcesso();
-        }
+  try {
+    // Busca a senha do arquivo .txt (apenas esta linha é nova!)
+    const resposta = await fetch(urlSenha);
+    const senhaCorreta = (await resposta.text()).trim();
+
+    // A partir daqui, tudo é IGUAL ao seu código original!
+    if (comando === senhaCorreta) {
+      sessionStorage.setItem('necro_estado', 'sucesso');
+      reiniciarNecrofago();
+    } else {
+      tentativas++;
+      resposta.innerHTML = `<p style="color:red;">❌ Comando incorreto. Tentativas restantes: ${3 - tentativas}</p>`;
+      
+      if (tentativas >= 3) {
+        sessionStorage.setItem('necro_estado', 'bloqueado');
+        bloquearAcesso();
       }
     }
-
+  } catch (erro) {
+    console.error("Erro ao carregar a senha:", erro);
+    resposta.innerHTML = `<p style="color:red;">Erro ao validar. Recarregue a página.</p>`;
+  }
+}
+    
     function reiniciarNecrofago() {
       clearInterval(intervalo);
       sirene.pause();
