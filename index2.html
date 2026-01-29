@@ -235,16 +235,23 @@
 
     function verificarComando() {
       if (bloqueado) return;
-
+    
       const comando = document.getElementById("comando").value.trim();
-      const senhaOculta = window.atob("eXNpYWQ="); // comando guardado em "doorway", codificado em Base64.
-
+      const senhaOculta = window.atob("eXNpYWQ="); // "ysiad" em Base64
+    
       if (comando === senhaOculta) {
         sessionStorage.setItem('necro_estado', 'sucesso');
         reiniciarNecrofago();
       } else {
         tentativas++;
+        
+        // Mensagem principal sempre aparece
         resposta.innerHTML = `<p style="color:red;">❌ Comando incorreto. Tentativas restantes: ${3 - tentativas}</p>`;
+        
+        // Adiciona dica após 2 tentativas erradas
+        if (tentativas === 2) {
+          resposta.innerHTML += `<p style="color:orange; margin-top: 5px;">💡 Dica: o comando deve ser escrito tudo em minúsculo</p>`;
+        }
         
         if (tentativas >= 3) {
           sessionStorage.setItem('necro_estado', 'bloqueado');
