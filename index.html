@@ -142,7 +142,7 @@
 
     // ========== CÓDIGO ORIGINAL REVISADO ========== //
     // Controle de data/hora
-    const dataAtivacao = new Date("2026-01-29T13:58:00"); // Data/hora INICIAL
+    const dataAtivacao = new Date("2026-01-29T14:10:00"); // Data/hora INICIAL
     const dataExpiracao = new Date("2026-01-29T21:25:00"); // Data/hora FINAL
     
     const agora = new Date();
@@ -245,7 +245,10 @@
       } else {
         tentativas++;
         resposta.innerHTML = `<p style="color:red;">❌ Comando incorreto. Tentativas restantes: ${3 - tentativas}</p>`;
-        
+
+        if (tentativas == 2) {
+          sresposta.innerHTML = `<p style="color:red;"> Dica: o código deve ser escrito tudo em minúsculo!</p>`;
+        }
         if (tentativas >= 3) {
           sessionStorage.setItem('necro_estado', 'bloqueado');
           bloquearAcesso();
