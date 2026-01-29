@@ -245,10 +245,7 @@
       } else {
         tentativas++;
         resposta.innerHTML = `<p style="color:red;">❌ Comando incorreto. Tentativas restantes: ${3 - tentativas}</p>`;
-
-        if (tentativas == 2) {
-          sresposta.innerHTML = `<p style="color:red;"> Dica: o código deve ser escrito tudo em minúsculo!</p>`;
-        }
+        
         if (tentativas >= 3) {
           sessionStorage.setItem('necro_estado', 'bloqueado');
           bloquearAcesso();
