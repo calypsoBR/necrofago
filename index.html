@@ -242,6 +242,7 @@
       if (comando === senhaOculta) {
         sessionStorage.setItem('necro_estado', 'sucesso');
         reiniciarNecrofago();
+     
       } else {
         tentativas++;
         resposta.innerHTML = `<p style="color:red;">❌ Comando incorreto. Tentativas restantes: ${3 - tentativas}</p>`;
@@ -252,7 +253,7 @@
         }
       }
     }
-
+    
     function reiniciarNecrofago() {
       clearInterval(intervalo);
       sirene.pause();
